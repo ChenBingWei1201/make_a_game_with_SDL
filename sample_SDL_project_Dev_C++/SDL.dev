@@ -51,7 +51,7 @@ AutoIncBuildNr=0
 SyncProduct=1
 
 [Unit2]
-FileName=10. library-2\p. 41 Animated Image.cpp
+FileName=12. class-2\p. 50 Ellipse ¡V const Operator.cpp
 CompileCpp=1
 Folder=
 Compile=1
@@ -61,7 +61,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit1]
-FileName=02_getting_an_image_on_the_screen\02_getting_an_image_on_the_screen\02_getting_an_image_on_the_screen.cpp
+FileName=12. class-2\p. 56 static Member.cpp
 CompileCpp=1
 Folder=
 Compile=1
