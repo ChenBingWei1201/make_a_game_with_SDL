@@ -29,6 +29,6 @@ int main(int argc, char*argv[])
 	elipso x(200, 200, 50, 30);
 	const elipso y(50);
 	x.show(); // non-const obj non-const func
-	cout << y.area() << endl; // non-const obj const func
+	cout << "y.area = " << y.area() << endl; // non-const obj const func
 	getch(); closegraph();
 } 

@@ -29,7 +29,7 @@ IncludeVersionInfo=0
 SupportXPThemes=0
 CompilerSet=0
 CompilerSettings=0000000000000000001000000
-UnitCount=1
+UnitCount=3
 
 [VersionInfo]
 Major=1
@@ -51,17 +51,61 @@ AutoIncBuildNr=0
 SyncProduct=1
 
 [Unit2]
-FileName=12. class-2\p. 50 Ellipse ¡V const Operator.cpp
-CompileCpp=1
+FileName=03_event_driven_programming\03_event_driven_programming.o
 Folder=
-Compile=1
-Link=1
+Compile=0
+Link=0
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit3]
+FileName=03_event_driven_programming\x.bmp
+Folder=
+Compile=0
+Link=0
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit4]
+FileName=04_key_presses\press.bmp
+Folder=
+Compile=0
+Link=0
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit5]
+FileName=04_key_presses\readme.txt
+Folder=
+Compile=0
+Link=0
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit6]
+FileName=04_key_presses\right.bmp
+Folder=
+Compile=0
+Link=0
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit7]
+FileName=04_key_presses\up.bmp
+Folder=
+Compile=0
+Link=0
 Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
 [Unit1]
-FileName=12. class-2\p. 56 static Member.cpp
+FileName=03_event_driven_programming\03_event_driven_programming.cpp
 CompileCpp=1
 Folder=
 Compile=1

@@ -14,7 +14,7 @@ cout << "Object ID = " << id << " copy constructor called "
 private:
 int id;
 };
-void func(elipso x)
+void func(elipso &x)
 {
 cout << "func() execution begins" << endl;
 elipso fifth(5);

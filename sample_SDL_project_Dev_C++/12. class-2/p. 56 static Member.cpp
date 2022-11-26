@@ -17,7 +17,8 @@ class elipso
 int elipso::count = 5;
 elipso::elipso(int x) : PI(3.14159)
 {
-	count++; r=x/count ;
+	count++; 
+	r=x/count ;
 	circle(rand()%getmaxx(), rand()%getmaxy(), r);
 //	cout << r << endl;
 }
@@ -28,8 +29,11 @@ int main(int argc, char*argv[])
 	elipso *c1 = new elipso(100);
 	elipso *c2 = new elipso(100);
 	elipso *c3 = new elipso(100);
-//	cout << c3-> r;
-	cout << "# of circles is " << c3->get_count() << endl;
+//	cout << c1-> r << endl;
+	cout << c2-> r << endl;
+	cout << c3-> r << endl;
+
+	cout << "# of circles is " << c3 -> get_count() << endl;
 	delete c1;
 	delete c2;
 	delete c3;
