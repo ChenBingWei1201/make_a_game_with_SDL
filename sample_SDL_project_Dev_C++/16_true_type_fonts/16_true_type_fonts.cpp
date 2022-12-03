@@ -291,7 +291,7 @@ bool loadMedia()
 	bool success = true;
 
 	//Open the font
-	gFont = TTF_OpenFont( "16_true_type_fonts/orange juice 2.0.ttf", 50 );
+	gFont = TTF_OpenFont( "16_true_type_fonts/ALBAS___.TTF", 75 );
 	if( gFont == NULL )
 	{
 		printf( "Failed to load orange juice 2.0 font! SDL_ttf Error: %s\n", TTF_GetError() );

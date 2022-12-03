@@ -29,7 +29,7 @@ IncludeVersionInfo=0
 SupportXPThemes=0
 CompilerSet=0
 CompilerSettings=0000000000000000001000000
-UnitCount=3
+UnitCount=1
 
 [VersionInfo]
 Major=1
@@ -50,17 +50,8 @@ ProductVersion=1.0.0.0
 AutoIncBuildNr=0
 SyncProduct=1
 
-[Unit2]
-FileName=17_mouse_events\button.png
-Folder=
-Compile=0
-Link=0
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit1]
-FileName=17_mouse_events\17_mouse_events.cpp
+[Unit3]
+FileName=SDL2_image-2.6.2\x86_64-w64-mingw32\include\SDL2\SDL_image.h
 CompileCpp=1
 Folder=
 Compile=1
@@ -69,8 +60,8 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit3]
-FileName=SDL2_image-2.6.2\x86_64-w64-mingw32\include\SDL2\SDL_image.h
+[Unit1]
+FileName=16_true_type_fonts\16_true_type_fonts.cpp
 CompileCpp=1
 Folder=
 Compile=1
