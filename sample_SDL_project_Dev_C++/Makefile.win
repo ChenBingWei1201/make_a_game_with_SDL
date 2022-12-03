@@ -4,11 +4,11 @@
 CPP      = g++.exe -D__DEBUG__
 CC       = gcc.exe -D__DEBUG__
 WINDRES  = windres.exe
-OBJ      = 03_event_driven_programming/03_event_driven_programming.o
-LINKOBJ  = 03_event_driven_programming/03_event_driven_programming.o
+OBJ      = 16_true_type_fonts/16_true_type_fonts.o
+LINKOBJ  = 16_true_type_fonts/16_true_type_fonts.o
 LIBS     = -L"C:/Program Files (x86)/Dev-Cpp/MinGW64/lib" -L"C:/Program Files (x86)/Dev-Cpp/MinGW64/x86_64-w64-mingw32/lib" -L"SDL2-2.24.2/x86_64-w64-mingw32/lib" -L"SDL_bgi-2.6.0/bin/Mingw64" -L"SDL2_image-2.6.2/x86_64-w64-mingw32/lib" -L"SDL2_mixer-2.6.2/x86_64-w64-mingw32/lib" -L"SDL2_ttf-2.20.1/x86_64-w64-mingw32/lib" -lmingw32 -L/mingw64/bin -lSDL_bgi -lSDL2_ttf -lSDL2_mixer -lSDL2_image -lSDL2main -lSDL2 -g3
-INCS     = -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/x86_64-w64-mingw32/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include" -I"SDL2-2.24.2/x86_64-w64-mingw32/include" -I"SDL2-2.24.2/x86_64-w64-mingw32/include/SDL2" -I"SDL_bgi-2.6.0/src" -I"SDL2_mixer-2.6.2/x86_64-w64-mingw32/include" -I"SDL2_image-2.6.2/x86_64-w64-mingw32/include" -I"SDL2_ttf-2.20.1/x86_64-w64-mingw32/include"
-CXXINCS  = -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/x86_64-w64-mingw32/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include/c++" -I"C:/Users/Pro/Desktop/SDL2-2.0.10/x86_64-w64-mingw32" -I"SDL2-2.24.2/x86_64-w64-mingw32/include" -I"SDL2-2.24.2/x86_64-w64-mingw32/include/SDL2" -I"SDL_bgi-2.6.0/src" -I"SDL2_mixer-2.6.2/x86_64-w64-mingw32/include" -I"SDL2_image-2.6.2/x86_64-w64-mingw32/include" -I"SDL2_ttf-2.20.1/x86_64-w64-mingw32/include"
+INCS     = -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/x86_64-w64-mingw32/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include" -I"C:/Users/Pro/Desktop/make_a_game_with_SDL/sample_SDL_project_Dev_C++/SDL2_image-2.6.2/x86_64-w64-mingw32/bin" -I"SDL2-2.24.2/x86_64-w64-mingw32/include" -I"SDL2-2.24.2/x86_64-w64-mingw32/include/SDL2" -I"SDL_bgi-2.6.0/src" -I"SDL2_mixer-2.6.2/x86_64-w64-mingw32/include" -I"SDL2_image-2.6.2/x86_64-w64-mingw32/include" -I"SDL2_ttf-2.20.1/x86_64-w64-mingw32/include"
+CXXINCS  = -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/x86_64-w64-mingw32/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include/c++" -I"C:/Users/Pro/Desktop/SDL2-2.0.10/x86_64-w64-mingw32" -I"C:/Users/Pro/Desktop/make_a_game_with_SDL/sample_SDL_project_Dev_C++/SDL2_image-2.6.2/x86_64-w64-mingw32/include/SDL2" -I"C:/Users/Pro/Desktop/make_a_game_with_SDL/sample_SDL_project_Dev_C++/SDL2_ttf-2.20.1/x86_64-w64-mingw32/include/SDL2" -I"SDL2-2.24.2/x86_64-w64-mingw32/include" -I"SDL2-2.24.2/x86_64-w64-mingw32/include/SDL2" -I"SDL_bgi-2.6.0/src" -I"SDL2_mixer-2.6.2/x86_64-w64-mingw32/include" -I"SDL2_image-2.6.2/x86_64-w64-mingw32/include" -I"SDL2_ttf-2.20.1/x86_64-w64-mingw32/include"
 BIN      = SDL.exe
 CXXFLAGS = $(CXXINCS) -g3
 CFLAGS   = $(INCS) -g3
@@ -24,5 +24,5 @@ clean: clean-custom
 $(BIN): $(OBJ)
 	$(CPP) $(LINKOBJ) -o $(BIN) $(LIBS)
 
-03_event_driven_programming/03_event_driven_programming.o: 03_event_driven_programming/03_event_driven_programming.cpp
-	$(CPP) -c 03_event_driven_programming/03_event_driven_programming.cpp -o 03_event_driven_programming/03_event_driven_programming.o $(CXXFLAGS)
+16_true_type_fonts/16_true_type_fonts.o: 16_true_type_fonts/16_true_type_fonts.cpp
+	$(CPP) -c 16_true_type_fonts/16_true_type_fonts.cpp -o 16_true_type_fonts/16_true_type_fonts.o $(CXXFLAGS)
