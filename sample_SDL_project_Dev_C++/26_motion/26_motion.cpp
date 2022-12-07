@@ -137,6 +137,8 @@ SDL_Renderer* gRenderer = NULL;
 
 //Scene textures
 LTexture gDotTexture;
+//LTexture gFooTexture;
+LTexture gBackgroundTexture;
 
 LTexture::LTexture()
 {
@@ -275,7 +277,7 @@ void LTexture::render( int x, int y, SDL_Rect* clip, double angle, SDL_Point* ce
 	//Render to screen
 	SDL_RenderCopyEx( gRenderer, mTexture, clip, &renderQuad, angle, center, flip );
 }
-
+//ok
 int LTexture::getWidth()
 {
 	return mWidth;
@@ -414,20 +416,30 @@ bool loadMedia()
 	//Loading success flag
 	bool success = true;
 
+	//Load background texture
+	if( !gBackgroundTexture.loadFromFile( "26_motion/road-1.jpg" ) )
+	{
+		printf( "Failed to load background texture image!\n" );
+		success = false;
+	}
+
 	//Load dot texture
-	if( !gDotTexture.loadFromFile( "26_motion/dot.bmp" ) )
+	if( !gDotTexture.loadFromFile( "26_motion/h3.bmp" ) )
 	{
 		printf( "Failed to load dot texture!\n" );
 		success = false;
 	}
+	
 
 	return success;
 }
-
+// ok
 void close()
 {
 	//Free loaded images
 	gDotTexture.free();
+	gBackgroundTexture.free();
+//	gFooTexture.free();
 
 	//Destroy window	
 	SDL_DestroyRenderer( gRenderer );
@@ -490,6 +502,12 @@ int main( int argc, char* args[] )
 
 				//Render objects
 				dot.render();
+
+				//Render background texture to screen
+				gBackgroundTexture.render( 0, 0 );
+
+				//Render Foo' to the screen
+//				gFooTexture.render( 240, 190 );
 
 				//Update screen
 				SDL_RenderPresent( gRenderer );

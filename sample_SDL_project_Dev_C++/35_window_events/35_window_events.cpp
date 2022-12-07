@@ -1,15 +1,16 @@
 /*This source code copyrighted by Lazy Foo' Productions (2004-2022)
 and may not be redistributed without written permission.*/
 
-//Using SDL, SDL_image, standard IO, and strings
+//Using SDL, SDL_image, standard IO, strings, and string streams
 #include <SDL.h>
 #include <SDL_image.h>
 #include <stdio.h>
 #include <string>
+#include <sstream>
 
 //Screen dimension constants
-const int SCREEN_WIDTH = 800;
-const int SCREEN_HEIGHT = 600;
+const int SCREEN_WIDTH = 640;
+const int SCREEN_HEIGHT = 480;
 
 //Texture wrapper class
 class LTexture
@@ -57,39 +58,46 @@ class LTexture
 		int mHeight;
 };
 
-//The dot that will move around on the screen
-class Dot
+class LWindow
 {
-    public:
-		//The dimensions of the dot
-		static const int DOT_WIDTH = 10;
-		static const int DOT_HEIGHT = 10;
+	public:
+		//Intializes internals
+		LWindow();
 
-		//Maximum axis velocity of the dot
-		static const int DOT_VEL = 3;
+		//Creates window
+		bool init();
 
-		//Initializes the variables
-		Dot();
+		//Creates renderer from internal window
+		SDL_Renderer* createRenderer();
 
-		//Takes key presses and adjusts the dot's velocity
+		//Handles window events
 		void handleEvent( SDL_Event& e );
 
-		//Moves the dot and checks collision
-		void move( SDL_Rect& wall );
+		//Deallocates internals
+		void free();
 
-		//Shows the dot on the screen
-		void render();
-		
-		
-    private:
-		//The X and Y offsets of the dot
-		int mPosX, mPosY;
+		//Window dimensions
+		int getWidth();
+		int getHeight();
 
-		//The velocity of the dot
-		int mVelX, mVelY;
-		
-		//Dot's collision box
-		SDL_Rect mCollider;
+		//Window focii
+		bool hasMouseFocus();
+		bool hasKeyboardFocus();
+		bool isMinimized();
+
+	private:
+		//Window data
+		SDL_Window* mWindow;
+
+		//Window dimensions
+		int mWidth;
+		int mHeight;
+
+		//Window focus
+		bool mMouseFocus;
+		bool mKeyboardFocus;
+		bool mFullScreen;
+		bool mMinimized;
 };
 
 //Starts up SDL and creates window
@@ -101,17 +109,15 @@ bool loadMedia();
 //Frees media and shuts down SDL
 void close();
 
-//Box collision detector
-bool checkCollision( SDL_Rect a, SDL_Rect b );
-
-//The window we'll be rendering to
-SDL_Window* gWindow = NULL;
+//Our custom window
+LWindow gWindow;
 
 //The window renderer
 SDL_Renderer* gRenderer = NULL;
 
 //Scene textures
-LTexture gDotTexture;
+LTexture gSceneTexture;
+
 
 LTexture::LTexture()
 {
@@ -137,7 +143,6 @@ bool LTexture::loadFromFile( std::string path )
 
 	//Load image at specified path
 	SDL_Surface* loadedSurface = IMG_Load( path.c_str() );
-	SDL_Surface * IMG_LoadSizedSVG_RW(SDL_RWops *src, int width, int height);
 	if( loadedSurface == NULL )
 	{
 		printf( "Unable to load image %s! SDL_image Error: %s\n", path.c_str(), IMG_GetError() );
@@ -262,80 +267,161 @@ int LTexture::getHeight()
 	return mHeight;
 }
 
-Dot::Dot()
+LWindow::LWindow()
 {
-    //Initialize the offsets
-    mPosX = 0;
-    mPosY = 0;
-
-	//Set collision box dimension
-	mCollider.w = DOT_WIDTH;
-	mCollider.h = DOT_HEIGHT;
-
-    //Initialize the velocity
-    mVelX = 0;
-    mVelY = 0;
+	//Initialize non-existant window
+	mWindow = NULL;
+	mMouseFocus = false;
+	mKeyboardFocus = false;
+	mFullScreen = false;
+	mMinimized = false;
+	mWidth = 0;
+	mHeight = 0;
 }
 
-void Dot::handleEvent( SDL_Event& e )
+bool LWindow::init()
 {
-    //If a key was pressed
-	if( e.type == SDL_KEYDOWN && e.key.repeat == 0 )
-    {
-        //Adjust the velocity
-        switch( e.key.keysym.sym )
-        {
-            case SDLK_UP: mVelY -= DOT_VEL; break;
-            case SDLK_DOWN: mVelY += DOT_VEL; break;
-            case SDLK_LEFT: mVelX -= DOT_VEL; break;
-            case SDLK_RIGHT: mVelX += DOT_VEL; break;
-        }
-    }
-    //If a key was released
-    else if( e.type == SDL_KEYUP && e.key.repeat == 0 )
-    {
-        //Adjust the velocity
-        switch( e.key.keysym.sym )
-        {
-            case SDLK_UP: mVelY += DOT_VEL; break;
-            case SDLK_DOWN: mVelY -= DOT_VEL; break;
-            case SDLK_LEFT: mVelX += DOT_VEL; break;
-            case SDLK_RIGHT: mVelX -= DOT_VEL; break;
-        }
-    }
+	//Create window
+	mWindow = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE );
+	if( mWindow != NULL )
+	{
+		mMouseFocus = true;
+		mKeyboardFocus = true;
+		mWidth = SCREEN_WIDTH;
+		mHeight = SCREEN_HEIGHT;
+	}
+
+	return mWindow != NULL;
 }
 
-void Dot::move( SDL_Rect& wall )
+SDL_Renderer* LWindow::createRenderer()
 {
-    //Move the dot left or right
-    mPosX += mVelX;
-	mCollider.x = mPosX;
-
-    //If the dot collided or went too far to the left or right
-    if( ( mPosX < 0 ) || ( mPosX + DOT_WIDTH > SCREEN_WIDTH ) || checkCollision( mCollider, wall ) )
-    {
-        //Move back
-        mPosX -= mVelX;
-		mCollider.x = mPosX;
-    }
-
-    //Move the dot up or down
-    mPosY += mVelY;
-	mCollider.y = mPosY;
-
-    //If the dot collided or went too far up or down
-    if( ( mPosY < 0 ) || ( mPosY + DOT_HEIGHT > SCREEN_HEIGHT ) || checkCollision( mCollider, wall ) )
-    {
-        //Move back
-        mPosY -= mVelY;
-		mCollider.y = mPosY;
-    }
+	return SDL_CreateRenderer( mWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
 }
 
-void Dot::render()
+void LWindow::handleEvent( SDL_Event& e )
 {
-    //Show the dot
-	gDotTexture.render( mPosX, mPosY );
+	//Window event occured
+	if( e.type == SDL_WINDOWEVENT )
+	{
+		//Caption update flag
+		bool updateCaption = false;
+
+		switch( e.window.event )
+		{
+			//Get new dimensions and repaint on window size change
+			case SDL_WINDOWEVENT_SIZE_CHANGED:
+			mWidth = e.window.data1;
+			mHeight = e.window.data2;
+			SDL_RenderPresent( gRenderer );
+			break;
+
+			//Repaint on exposure
+			case SDL_WINDOWEVENT_EXPOSED:
+			SDL_RenderPresent( gRenderer );
+			break;
+
+			//Mouse entered window
+			case SDL_WINDOWEVENT_ENTER:
+			mMouseFocus = true;
+			updateCaption = true;
+			break;
+			
+			//Mouse left window
+			case SDL_WINDOWEVENT_LEAVE:
+			mMouseFocus = false;
+			updateCaption = true;
+			break;
+
+			//Window has keyboard focus
+			case SDL_WINDOWEVENT_FOCUS_GAINED:
+			mKeyboardFocus = true;
+			updateCaption = true;
+			break;
+
+			//Window lost keyboard focus
+			case SDL_WINDOWEVENT_FOCUS_LOST:
+			mKeyboardFocus = false;
+			updateCaption = true;
+			break;
+
+			//Window minimized
+			case SDL_WINDOWEVENT_MINIMIZED:
+            mMinimized = true;
+            break;
+
+			//Window maximized
+			case SDL_WINDOWEVENT_MAXIMIZED:
+			mMinimized = false;
+            break;
+			
+			//Window restored
+			case SDL_WINDOWEVENT_RESTORED:
+			mMinimized = false;
+            break;
+		}
+
+		//Update window caption with new data
+		if( updateCaption )
+		{
+			std::stringstream caption;
+			caption << "SDL Tutorial - MouseFocus:" << ( ( mMouseFocus ) ? "On" : "Off" ) << " KeyboardFocus:" << ( ( mKeyboardFocus ) ? "On" : "Off" );
+			SDL_SetWindowTitle( mWindow, caption.str().c_str() );
+		}
+	}
+	//Enter exit full screen on return key
+	else if( e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_RETURN )
+	{
+		if( mFullScreen )
+		{
+			SDL_SetWindowFullscreen( mWindow, SDL_FALSE );
+			mFullScreen = false;
+		}
+		else
+		{
+			SDL_SetWindowFullscreen( mWindow, SDL_TRUE );
+			mFullScreen = true;
+			mMinimized = false;
+		}
+	}
+}
+
+void LWindow::free()
+{
+	if( mWindow != NULL )
+	{
+		SDL_DestroyWindow( mWindow );
+	}
+
+	mMouseFocus = false;
+	mKeyboardFocus = false;
+	mWidth = 0;
+	mHeight = 0;
+}
+
+int LWindow::getWidth()
+{
+	return mWidth;
+}
+
+int LWindow::getHeight()
+{
+	return mHeight;
+}
+
+bool LWindow::hasMouseFocus()
+{
+	return mMouseFocus;
+}
+
+bool LWindow::hasKeyboardFocus()
+{
+	return mKeyboardFocus;
+}
+
+bool LWindow::isMinimized()
+{
+	return mMinimized;
 }
 
 bool init()
@@ -358,16 +444,15 @@ bool init()
 		}
 
 		//Create window
-		gWindow = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
-		if( gWindow == NULL )
+		if( !gWindow.init() )
 		{
 			printf( "Window could not be created! SDL Error: %s\n", SDL_GetError() );
 			success = false;
 		}
 		else
 		{
-			//Create vsynced renderer for window
-			gRenderer = SDL_CreateRenderer( gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
+			//Create renderer for window
+			gRenderer = gWindow.createRenderer();
 			if( gRenderer == NULL )
 			{
 				printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
@@ -397,10 +482,10 @@ bool loadMedia()
 	//Loading success flag
 	bool success = true;
 
-	//Load press texture
-	if( !gDotTexture.loadFromFile( "27_collision_detection/sample_blue2.bmp" ) )
+	//Load scene texture
+	if( !gSceneTexture.loadFromFile( "35_window_events/window.png" ) )
 	{
-		printf( "Failed to load dot texture!\n" );
+		printf( "Failed to load window texture!\n" );
 		success = false;
 	}
 
@@ -410,62 +495,15 @@ bool loadMedia()
 void close()
 {
 	//Free loaded images
-	gDotTexture.free();
+	gSceneTexture.free();
 
 	//Destroy window	
 	SDL_DestroyRenderer( gRenderer );
-	SDL_DestroyWindow( gWindow );
-	gWindow = NULL;
-	gRenderer = NULL;
+	gWindow.free();
 
 	//Quit SDL subsystems
 	IMG_Quit();
 	SDL_Quit();
-}
-
-bool checkCollision( SDL_Rect a, SDL_Rect b )
-{
-    //The sides of the rectangles
-    int leftA, leftB;
-    int rightA, rightB;
-    int topA, topB;
-    int bottomA, bottomB;
-
-    //Calculate the sides of rect A
-    leftA = a.x;
-    rightA = a.x + a.w;
-    topA = a.y;
-    bottomA = a.y + a.h;
-
-    //Calculate the sides of rect B
-    leftB = b.x;
-    rightB = b.x + b.w;
-    topB = b.y;
-    bottomB = b.y + b.h;
-
-    //If any of the sides from A are outside of B
-    if( bottomA <= topB )
-    {
-        return false;
-    }
-
-    if( topA >= bottomB )
-    {
-        return false;
-    }
-
-    if( rightA <= leftB )
-    {
-        return false;
-    }
-
-    if( leftA >= rightB )
-    {
-        return false;
-    }
-
-    //If none of the sides from A are outside B
-    return true;
 }
 
 int main( int argc, char* args[] )
@@ -490,16 +528,6 @@ int main( int argc, char* args[] )
 			//Event handler
 			SDL_Event e;
 
-			//The dot that will be moving around on the screen
-			Dot dot;
-
-			//Set the wall
-			SDL_Rect wall;
-			wall.x = 300;
-			wall.y = 40;
-			wall.w = 40;
-			wall.h = 400;
-			
 			//While application is running
 			while( !quit )
 			{
@@ -512,26 +540,23 @@ int main( int argc, char* args[] )
 						quit = true;
 					}
 
-					//Handle input for the dot
-					dot.handleEvent( e );
+					//Handle window events
+					gWindow.handleEvent( e );
 				}
 
-				//Move the dot and check collision
-				dot.move( wall );
+				//Only draw when not minimized
+				if( !gWindow.isMinimized() )
+				{
+					//Clear screen
+					SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
+					SDL_RenderClear( gRenderer );
 
-				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer );
+					//Render text textures
+					gSceneTexture.render( ( gWindow.getWidth() - gSceneTexture.getWidth() ) / 2, ( gWindow.getHeight() - gSceneTexture.getHeight() ) / 2 );
 
-				//Render wall
-				SDL_SetRenderDrawColor( gRenderer, 0x00, 0x00, 0x00, 0xFF );		
-				SDL_RenderDrawRect( gRenderer, &wall );
-				
-				//Render dot
-				dot.render();
-
-				//Update screen
-				SDL_RenderPresent( gRenderer );
+					//Update screen
+					SDL_RenderPresent( gRenderer );
+				}
 			}
 		}
 	}

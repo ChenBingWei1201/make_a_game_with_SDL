@@ -8,8 +8,8 @@ and may not be redistributed without written permission.*/
 #include <string>
 
 //Screen dimension constants
-const int SCREEN_WIDTH = 800;
-const int SCREEN_HEIGHT = 600;
+const int SCREEN_WIDTH = 640;
+const int SCREEN_HEIGHT = 480;
 
 //Texture wrapper class
 class LTexture
@@ -24,6 +24,12 @@ class LTexture
 		//Loads image at specified path
 		bool loadFromFile( std::string path );
 		
+		//Loads image into pixel buffer
+		bool loadPixelsFromFile( std::string path );
+
+		//Creates image from preloaded pixels
+		bool loadFromPixels();
+
 		#if defined(SDL_TTF_MAJOR_VERSION)
 		//Creates image from font string
 		bool loadFromRenderedText( std::string textureText, SDL_Color textColor );
@@ -48,48 +54,20 @@ class LTexture
 		int getWidth();
 		int getHeight();
 
+		//Pixel accessors
+		Uint32* getPixels32();
+		Uint32 getPitch32();
+
 	private:
 		//The actual hardware texture
 		SDL_Texture* mTexture;
 
+		//Surface pixels
+		SDL_Surface* mSurfacePixels;
+		
 		//Image dimensions
 		int mWidth;
 		int mHeight;
-};
-
-//The dot that will move around on the screen
-class Dot
-{
-    public:
-		//The dimensions of the dot
-		static const int DOT_WIDTH = 10;
-		static const int DOT_HEIGHT = 10;
-
-		//Maximum axis velocity of the dot
-		static const int DOT_VEL = 3;
-
-		//Initializes the variables
-		Dot();
-
-		//Takes key presses and adjusts the dot's velocity
-		void handleEvent( SDL_Event& e );
-
-		//Moves the dot and checks collision
-		void move( SDL_Rect& wall );
-
-		//Shows the dot on the screen
-		void render();
-		
-		
-    private:
-		//The X and Y offsets of the dot
-		int mPosX, mPosY;
-
-		//The velocity of the dot
-		int mVelX, mVelY;
-		
-		//Dot's collision box
-		SDL_Rect mCollider;
 };
 
 //Starts up SDL and creates window
@@ -101,9 +79,6 @@ bool loadMedia();
 //Frees media and shuts down SDL
 void close();
 
-//Box collision detector
-bool checkCollision( SDL_Rect a, SDL_Rect b );
-
 //The window we'll be rendering to
 SDL_Window* gWindow = NULL;
 
@@ -111,7 +86,7 @@ SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
 
 //Scene textures
-LTexture gDotTexture;
+LTexture gFooTexture;
 
 LTexture::LTexture()
 {
@@ -119,6 +94,8 @@ LTexture::LTexture()
 	mTexture = NULL;
 	mWidth = 0;
 	mHeight = 0;
+
+	mSurfacePixels = NULL;
 }
 
 LTexture::~LTexture()
@@ -129,43 +106,89 @@ LTexture::~LTexture()
 
 bool LTexture::loadFromFile( std::string path )
 {
-	//Get rid of preexisting texture
-	free();
+	//Load pixels
+	if( !loadPixelsFromFile( path ) )
+	{
+		printf( "Failed to load pixels for %s!\n", path.c_str() );
+	}
+	else
+	{
+		//Load texture from pixels
+		if( !loadFromPixels() )
+		{
+			printf( "Failed to texture from pixels from %s!\n", path.c_str() );
+		}
+	}
 
-	//The final texture
-	SDL_Texture* newTexture = NULL;
+	//Return success
+	return mTexture != NULL;
+}
+
+
+bool LTexture::loadPixelsFromFile( std::string path )
+{
+	//Free preexisting assets
+	free();
 
 	//Load image at specified path
 	SDL_Surface* loadedSurface = IMG_Load( path.c_str() );
-	SDL_Surface * IMG_LoadSizedSVG_RW(SDL_RWops *src, int width, int height);
 	if( loadedSurface == NULL )
 	{
 		printf( "Unable to load image %s! SDL_image Error: %s\n", path.c_str(), IMG_GetError() );
 	}
 	else
 	{
-		//Color key image
-		SDL_SetColorKey( loadedSurface, SDL_TRUE, SDL_MapRGB( loadedSurface->format, 0, 0xFF, 0xFF ) );
-
-		//Create texture from surface pixels
-        newTexture = SDL_CreateTextureFromSurface( gRenderer, loadedSurface );
-		if( newTexture == NULL )
+		//Convert surface to display format
+		mSurfacePixels = SDL_ConvertSurfaceFormat( loadedSurface, SDL_GetWindowPixelFormat( gWindow ), 0 );
+		if( mSurfacePixels == NULL )
 		{
-			printf( "Unable to create texture from %s! SDL Error: %s\n", path.c_str(), SDL_GetError() );
+			printf( "Unable to convert loaded surface to display format! SDL Error: %s\n", SDL_GetError() );
 		}
 		else
 		{
 			//Get image dimensions
-			mWidth = loadedSurface->w;
-			mHeight = loadedSurface->h;
+			mWidth = mSurfacePixels->w;
+			mHeight = mSurfacePixels->h;
 		}
 
 		//Get rid of old loaded surface
 		SDL_FreeSurface( loadedSurface );
 	}
 
+	return mSurfacePixels != NULL;
+}
+
+bool LTexture::loadFromPixels()
+{
+	//Only load if pixels exist
+	if( mSurfacePixels == NULL )
+	{
+		printf( "No pixels loaded!" );
+	}
+	else
+	{
+		//Color key image
+		SDL_SetColorKey( mSurfacePixels, SDL_TRUE, SDL_MapRGB( mSurfacePixels->format, 0, 0xFF, 0xFF ) );
+
+		//Create texture from surface pixels
+		mTexture = SDL_CreateTextureFromSurface( gRenderer, mSurfacePixels );
+		if( mTexture == NULL )
+		{
+			printf( "Unable to create texture from loaded pixels! SDL Error: %s\n", SDL_GetError() );
+		}
+		else
+		{
+			//Get image dimensions
+			mWidth = mSurfacePixels->w;
+			mHeight = mSurfacePixels->h;
+		}
+
+		//Get rid of old loaded surface
+		SDL_FreeSurface( mSurfacePixels );
+		mSurfacePixels = NULL;
+	}
+
 	//Return success
-	mTexture = newTexture;
 	return mTexture != NULL;
 }
 
@@ -216,6 +239,13 @@ void LTexture::free()
 		mWidth = 0;
 		mHeight = 0;
 	}
+
+	//Free surface if it exists
+	if( mSurfacePixels != NULL )
+	{
+		SDL_FreeSurface( mSurfacePixels );
+		mSurfacePixels = NULL;
+	}
 }
 
 void LTexture::setColor( Uint8 red, Uint8 green, Uint8 blue )
@@ -262,80 +292,28 @@ int LTexture::getHeight()
 	return mHeight;
 }
 
-Dot::Dot()
+Uint32* LTexture::getPixels32()
 {
-    //Initialize the offsets
-    mPosX = 0;
-    mPosY = 0;
+	Uint32* pixels = NULL;
 
-	//Set collision box dimension
-	mCollider.w = DOT_WIDTH;
-	mCollider.h = DOT_HEIGHT;
+	if( mSurfacePixels != NULL )
+	{
+		pixels =  static_cast<Uint32*>( mSurfacePixels->pixels );
+	}
 
-    //Initialize the velocity
-    mVelX = 0;
-    mVelY = 0;
+	return pixels;
 }
 
-void Dot::handleEvent( SDL_Event& e )
+Uint32 LTexture::getPitch32()
 {
-    //If a key was pressed
-	if( e.type == SDL_KEYDOWN && e.key.repeat == 0 )
-    {
-        //Adjust the velocity
-        switch( e.key.keysym.sym )
-        {
-            case SDLK_UP: mVelY -= DOT_VEL; break;
-            case SDLK_DOWN: mVelY += DOT_VEL; break;
-            case SDLK_LEFT: mVelX -= DOT_VEL; break;
-            case SDLK_RIGHT: mVelX += DOT_VEL; break;
-        }
-    }
-    //If a key was released
-    else if( e.type == SDL_KEYUP && e.key.repeat == 0 )
-    {
-        //Adjust the velocity
-        switch( e.key.keysym.sym )
-        {
-            case SDLK_UP: mVelY += DOT_VEL; break;
-            case SDLK_DOWN: mVelY -= DOT_VEL; break;
-            case SDLK_LEFT: mVelX += DOT_VEL; break;
-            case SDLK_RIGHT: mVelX -= DOT_VEL; break;
-        }
-    }
-}
+	Uint32 pitch = 0;
 
-void Dot::move( SDL_Rect& wall )
-{
-    //Move the dot left or right
-    mPosX += mVelX;
-	mCollider.x = mPosX;
+	if( mSurfacePixels != NULL )
+	{
+		pitch = mSurfacePixels->pitch / 4;
+	}
 
-    //If the dot collided or went too far to the left or right
-    if( ( mPosX < 0 ) || ( mPosX + DOT_WIDTH > SCREEN_WIDTH ) || checkCollision( mCollider, wall ) )
-    {
-        //Move back
-        mPosX -= mVelX;
-		mCollider.x = mPosX;
-    }
-
-    //Move the dot up or down
-    mPosY += mVelY;
-	mCollider.y = mPosY;
-
-    //If the dot collided or went too far up or down
-    if( ( mPosY < 0 ) || ( mPosY + DOT_HEIGHT > SCREEN_HEIGHT ) || checkCollision( mCollider, wall ) )
-    {
-        //Move back
-        mPosY -= mVelY;
-		mCollider.y = mPosY;
-    }
-}
-
-void Dot::render()
-{
-    //Show the dot
-	gDotTexture.render( mPosX, mPosY );
+	return pitch;
 }
 
 bool init()
@@ -366,7 +344,7 @@ bool init()
 		}
 		else
 		{
-			//Create vsynced renderer for window
+			//Create renderer for window
 			gRenderer = SDL_CreateRenderer( gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
 			if( gRenderer == NULL )
 			{
@@ -397,11 +375,36 @@ bool loadMedia()
 	//Loading success flag
 	bool success = true;
 
-	//Load press texture
-	if( !gDotTexture.loadFromFile( "27_collision_detection/sample_blue2.bmp" ) )
+	//Load Foo' texture pixel
+	if( !gFooTexture.loadPixelsFromFile( "40_texture_manipulation/foo.png" ) )
 	{
-		printf( "Failed to load dot texture!\n" );
+		printf( "Unable to load Foo' texture!\n" );
 		success = false;
+	}
+	else
+	{
+		//Get pixel data
+		Uint32* pixels = gFooTexture.getPixels32();
+		int pixelCount = gFooTexture.getPitch32() * gFooTexture.getHeight();
+
+		//Map colors
+		Uint32 colorKey = SDL_MapRGBA( SDL_GetWindowSurface( gWindow )->format, 0xFF, 0x00, 0xFF, 0xFF );
+		Uint32 transparent = SDL_MapRGBA( SDL_GetWindowSurface( gWindow )->format, 0xFF, 0xFF, 0xFF, 0x00 );
+
+		//Color key pixels
+		for( int i = 0; i < pixelCount; ++i )
+		{
+			if( pixels[ i ] == colorKey )
+			{
+				pixels[ i ] = transparent;
+			}
+		}
+
+		//Create texture from manually color keyed pixels
+		if( !gFooTexture.loadFromPixels() )
+		{
+			printf( "Unable to load Foo' texture from surface!\n" );
+		}
 	}
 
 	return success;
@@ -410,7 +413,7 @@ bool loadMedia()
 void close()
 {
 	//Free loaded images
-	gDotTexture.free();
+	gFooTexture.free();
 
 	//Destroy window	
 	SDL_DestroyRenderer( gRenderer );
@@ -421,51 +424,6 @@ void close()
 	//Quit SDL subsystems
 	IMG_Quit();
 	SDL_Quit();
-}
-
-bool checkCollision( SDL_Rect a, SDL_Rect b )
-{
-    //The sides of the rectangles
-    int leftA, leftB;
-    int rightA, rightB;
-    int topA, topB;
-    int bottomA, bottomB;
-
-    //Calculate the sides of rect A
-    leftA = a.x;
-    rightA = a.x + a.w;
-    topA = a.y;
-    bottomA = a.y + a.h;
-
-    //Calculate the sides of rect B
-    leftB = b.x;
-    rightB = b.x + b.w;
-    topB = b.y;
-    bottomB = b.y + b.h;
-
-    //If any of the sides from A are outside of B
-    if( bottomA <= topB )
-    {
-        return false;
-    }
-
-    if( topA >= bottomB )
-    {
-        return false;
-    }
-
-    if( rightA <= leftB )
-    {
-        return false;
-    }
-
-    if( leftA >= rightB )
-    {
-        return false;
-    }
-
-    //If none of the sides from A are outside B
-    return true;
 }
 
 int main( int argc, char* args[] )
@@ -490,16 +448,6 @@ int main( int argc, char* args[] )
 			//Event handler
 			SDL_Event e;
 
-			//The dot that will be moving around on the screen
-			Dot dot;
-
-			//Set the wall
-			SDL_Rect wall;
-			wall.x = 300;
-			wall.y = 40;
-			wall.w = 40;
-			wall.h = 400;
-			
 			//While application is running
 			while( !quit )
 			{
@@ -511,24 +459,14 @@ int main( int argc, char* args[] )
 					{
 						quit = true;
 					}
-
-					//Handle input for the dot
-					dot.handleEvent( e );
 				}
-
-				//Move the dot and check collision
-				dot.move( wall );
 
 				//Clear screen
 				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
 				SDL_RenderClear( gRenderer );
 
-				//Render wall
-				SDL_SetRenderDrawColor( gRenderer, 0x00, 0x00, 0x00, 0xFF );		
-				SDL_RenderDrawRect( gRenderer, &wall );
-				
-				//Render dot
-				dot.render();
+				//Render stick figure
+				gFooTexture.render( ( SCREEN_WIDTH - gFooTexture.getWidth() ) / 2, ( SCREEN_HEIGHT - gFooTexture.getHeight() ) / 2 );
 
 				//Update screen
 				SDL_RenderPresent( gRenderer );

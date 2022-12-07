@@ -1,15 +1,15 @@
 /*This source code copyrighted by Lazy Foo' Productions (2004-2022)
 and may not be redistributed without written permission.*/
 
-//Using SDL, SDL_image, standard IO, and strings
+//Using SDL, SDL_image, standard IO, vectors, and strings
 #include <SDL.h>
 #include <SDL_image.h>
 #include <stdio.h>
 #include <string>
 
 //Screen dimension constants
-const int SCREEN_WIDTH = 800;
-const int SCREEN_HEIGHT = 600;
+const int SCREEN_WIDTH = 640;
+const int SCREEN_HEIGHT = 480;
 
 //Texture wrapper class
 class LTexture
@@ -62,11 +62,11 @@ class Dot
 {
     public:
 		//The dimensions of the dot
-		static const int DOT_WIDTH = 10;
-		static const int DOT_HEIGHT = 10;
+		static const int DOT_WIDTH = 20;
+		static const int DOT_HEIGHT = 20;
 
 		//Maximum axis velocity of the dot
-		static const int DOT_VEL = 3;
+		static const int DOT_VEL = 5;
 
 		//Initializes the variables
 		Dot();
@@ -74,22 +74,18 @@ class Dot
 		//Takes key presses and adjusts the dot's velocity
 		void handleEvent( SDL_Event& e );
 
-		//Moves the dot and checks collision
-		void move( SDL_Rect& wall );
+		//Moves the dot
+		void move();
 
 		//Shows the dot on the screen
 		void render();
-		
-		
+
     private:
 		//The X and Y offsets of the dot
 		int mPosX, mPosY;
 
 		//The velocity of the dot
 		int mVelX, mVelY;
-		
-		//Dot's collision box
-		SDL_Rect mCollider;
 };
 
 //Starts up SDL and creates window
@@ -101,9 +97,6 @@ bool loadMedia();
 //Frees media and shuts down SDL
 void close();
 
-//Box collision detector
-bool checkCollision( SDL_Rect a, SDL_Rect b );
-
 //The window we'll be rendering to
 SDL_Window* gWindow = NULL;
 
@@ -112,6 +105,7 @@ SDL_Renderer* gRenderer = NULL;
 
 //Scene textures
 LTexture gDotTexture;
+LTexture gBGTexture;
 
 LTexture::LTexture()
 {
@@ -137,7 +131,6 @@ bool LTexture::loadFromFile( std::string path )
 
 	//Load image at specified path
 	SDL_Surface* loadedSurface = IMG_Load( path.c_str() );
-	SDL_Surface * IMG_LoadSizedSVG_RW(SDL_RWops *src, int width, int height);
 	if( loadedSurface == NULL )
 	{
 		printf( "Unable to load image %s! SDL_image Error: %s\n", path.c_str(), IMG_GetError() );
@@ -268,10 +261,6 @@ Dot::Dot()
     mPosX = 0;
     mPosY = 0;
 
-	//Set collision box dimension
-	mCollider.w = DOT_WIDTH;
-	mCollider.h = DOT_HEIGHT;
-
     //Initialize the velocity
     mVelX = 0;
     mVelY = 0;
@@ -305,30 +294,26 @@ void Dot::handleEvent( SDL_Event& e )
     }
 }
 
-void Dot::move( SDL_Rect& wall )
+void Dot::move()
 {
     //Move the dot left or right
     mPosX += mVelX;
-	mCollider.x = mPosX;
 
-    //If the dot collided or went too far to the left or right
-    if( ( mPosX < 0 ) || ( mPosX + DOT_WIDTH > SCREEN_WIDTH ) || checkCollision( mCollider, wall ) )
+    //If the dot went too far to the left or right
+    if( ( mPosX < 0 ) || ( mPosX + DOT_WIDTH > SCREEN_WIDTH ) )
     {
         //Move back
         mPosX -= mVelX;
-		mCollider.x = mPosX;
     }
 
     //Move the dot up or down
     mPosY += mVelY;
-	mCollider.y = mPosY;
 
-    //If the dot collided or went too far up or down
-    if( ( mPosY < 0 ) || ( mPosY + DOT_HEIGHT > SCREEN_HEIGHT ) || checkCollision( mCollider, wall ) )
+    //If the dot went too far up or down
+    if( ( mPosY < 0 ) || ( mPosY + DOT_HEIGHT > SCREEN_HEIGHT ) )
     {
         //Move back
         mPosY -= mVelY;
-		mCollider.y = mPosY;
     }
 }
 
@@ -397,10 +382,17 @@ bool loadMedia()
 	//Loading success flag
 	bool success = true;
 
-	//Load press texture
-	if( !gDotTexture.loadFromFile( "27_collision_detection/sample_blue2.bmp" ) )
+	//Load dot texture
+	if( !gDotTexture.loadFromFile( "31_scrolling_backgrounds/h3.bmp" ) )
 	{
 		printf( "Failed to load dot texture!\n" );
+		success = false;
+	}
+
+	//Load background texture
+	if( !gBGTexture.loadFromFile( "31_scrolling_backgrounds/test2.jpg" ) )
+	{
+		printf( "Failed to load background texture!\n" );
 		success = false;
 	}
 
@@ -411,6 +403,7 @@ void close()
 {
 	//Free loaded images
 	gDotTexture.free();
+	gBGTexture.free();
 
 	//Destroy window	
 	SDL_DestroyRenderer( gRenderer );
@@ -421,51 +414,6 @@ void close()
 	//Quit SDL subsystems
 	IMG_Quit();
 	SDL_Quit();
-}
-
-bool checkCollision( SDL_Rect a, SDL_Rect b )
-{
-    //The sides of the rectangles
-    int leftA, leftB;
-    int rightA, rightB;
-    int topA, topB;
-    int bottomA, bottomB;
-
-    //Calculate the sides of rect A
-    leftA = a.x;
-    rightA = a.x + a.w;
-    topA = a.y;
-    bottomA = a.y + a.h;
-
-    //Calculate the sides of rect B
-    leftB = b.x;
-    rightB = b.x + b.w;
-    topB = b.y;
-    bottomB = b.y + b.h;
-
-    //If any of the sides from A are outside of B
-    if( bottomA <= topB )
-    {
-        return false;
-    }
-
-    if( topA >= bottomB )
-    {
-        return false;
-    }
-
-    if( rightA <= leftB )
-    {
-        return false;
-    }
-
-    if( leftA >= rightB )
-    {
-        return false;
-    }
-
-    //If none of the sides from A are outside B
-    return true;
 }
 
 int main( int argc, char* args[] )
@@ -493,13 +441,9 @@ int main( int argc, char* args[] )
 			//The dot that will be moving around on the screen
 			Dot dot;
 
-			//Set the wall
-			SDL_Rect wall;
-			wall.x = 300;
-			wall.y = 40;
-			wall.w = 40;
-			wall.h = 400;
-			
+			//The background scrolling offset
+			int scrollingOffset = 0;
+
 			//While application is running
 			while( !quit )
 			{
@@ -516,18 +460,25 @@ int main( int argc, char* args[] )
 					dot.handleEvent( e );
 				}
 
-				//Move the dot and check collision
-				dot.move( wall );
+				//Move the dot
+				dot.move();
+
+				//Scroll background
+				--scrollingOffset;
+				if( scrollingOffset < -gBGTexture.getWidth() )
+				{
+					scrollingOffset = 0;
+				}
 
 				//Clear screen
 				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
 				SDL_RenderClear( gRenderer );
 
-				//Render wall
-				SDL_SetRenderDrawColor( gRenderer, 0x00, 0x00, 0x00, 0xFF );		
-				SDL_RenderDrawRect( gRenderer, &wall );
-				
-				//Render dot
+				//Render background
+				gBGTexture.render( scrollingOffset, 0 );
+				gBGTexture.render( scrollingOffset + gBGTexture.getWidth(), 0 );
+
+				//Render objects
 				dot.render();
 
 				//Update screen
